@@ -151,14 +151,14 @@ if (nperf > 0) {
     }
   }
 
-  index_today_usd <- perf_data$tot_ret_ix_usd[nperf-1]
-  index_yest_usd <- perf_data$tot_ret_ix_usd[nperf-2]
-  index_today_usd_h <- perf_data$tot_ret_ix_usd_h[nperf-1]
-  index_yest_usd_h <- perf_data$tot_ret_ix_usd_h[nperf-2]
-  index_today_gbp <- perf_data$tot_ret_ix_gbp[nperf-1]
-  index_yest_gbp <- perf_data$tot_ret_ix_gbp[nperf-2]
-  index_today_gbp_h <- perf_data$tot_ret_ix_gbp_h[nperf-1]
-  index_yest_gbp_h <- perf_data$tot_ret_ix_gbp_h[nperf-2]
+  index_today_usd <- perf_data$tot_ret_ix_usd[nperf]
+  index_yest_usd <- perf_data$tot_ret_ix_usd[nperf-1]
+  index_today_usd_h <- perf_data$tot_ret_ix_usd_h[nperf]
+  index_yest_usd_h <- perf_data$tot_ret_ix_usd_h[nperf-1]
+  index_today_gbp <- perf_data$tot_ret_ix_gbp[nperf]
+  index_yest_gbp <- perf_data$tot_ret_ix_gbp[nperf-1]
+  index_today_gbp_h <- perf_data$tot_ret_ix_gbp_h[nperf]
+  index_yest_gbp_h <- perf_data$tot_ret_ix_gbp_h[nperf-1]
 
   mtd_rtn_usd <- 100*(index_today_usd / index_prevme_usd - 1)
   mtd_rtn_yest_usd <- 100*(index_yest_usd / index_prevme_usd - 1)
@@ -167,7 +167,7 @@ if (nperf > 0) {
   mtd_rtn_usd_h <- 100*(index_today_usd_h / index_prevme_usd_h - 1)
   mtd_rtn_yest_usd_h <- 100*(index_yest_usd_h / index_prevme_usd_h - 1)
   day_rtn_usd_h <- 100*(index_today_usd_h / index_yest_usd_h - 1)
-  
+
   mtd_rtn_gbp <- 100*(index_today_gbp / index_prevme_gbp - 1)
   mtd_rtn_yest_gbp <- 100*(index_yest_gbp / index_prevme_gbp - 1)
   day_rtn_gbp <- 100*(index_today_gbp / index_yest_gbp - 1)
