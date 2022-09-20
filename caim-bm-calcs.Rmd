@@ -1,6 +1,6 @@
 ---
 params:
-  dt_eff: !r Sys.Date()-16
+  dt_eff: !r Sys.Date()-1
 ---
 
 ```{r setup, include=FALSE}
@@ -285,6 +285,21 @@ if (nac > 0) {
 }
 ```
 
+```{r ReadEOMDB, include=FALSE}
+if (nac > 0 && EndOfMonth(params$dt_eff)) {
+  dtEOM <- ceiling_date(params$dt_eff, 'month') %m-% days(1)
+  query_text <- paste0("SELECT account_id, source, obs_date, account_index, bench_index
+    FROM caim_account_performance cap
+    WHERE cap.obs_date >= '",dtEOM-47,"'
+    AND cap.obs_date <= '",dtEOM,"'
+    AND source = 'OFF'
+    AND period = 'M'
+    ORDER BY account_id, source, obs_date")
+  past_eom_data <- data.table(caim::mdb_get(conn, query_text))
+  nPastEOM <- length(past_eom_data$account_id)
+}
+```
+
 ```{r WriteDB, include=FALSE}
 nac <- length(ac_data$account_id)
 if (nac > 0) {
@@ -298,7 +313,7 @@ if (nac > 0) {
       #check if pre-existing perf record
       past_ac <- GetPastAc(ac_data$account_id[iac], params$dt_eff, past_data, nPast)
       
-      if (past_ac[1] || TRUE) {
+      if (past_ac[1]) {
         #if no record exists then need to create one
         nadd <- nadd + 1
         add_data[nadd,1] <- ac_data$account_id[iac]
@@ -327,6 +342,54 @@ if (nac > 0) {
   if (nadd > 0) {
     #!!! using bu table
     caim::mdb_insert(conn, "caim_account_performance_bu", add_data)
+  }
+}
+```
+
+```{r WriteEOMDB, include=FALSE}
+if (EndOfMonth(params$dt_eff)) {
+  
+  nac <- length(ac_data$account_id)
+  if (nac > 0) {
+    nadd_eom <- 0
+    add_eom_data <- data.frame(matrix(nrow=0,ncol=7))
+    names(add_eom_data)<-c("account_id","obs_date","source","period","account_index","bench_return","bench_index")
+
+    for (iac in 1:nac) {
+      if (!is.na(ac_data$mtd_rtn[iac])) {
+        
+        #check if pre-existing perf record
+        past_ac <- GetPastAc(ac_data$account_id[iac], dtEOM, past_eom_data, nPastEOM)
+        
+        if (past_ac[1]) {
+          #if no record exists then need to create one
+          nadd_eom <- nadd_eom + 1
+          add_eom_data[nadd_eom,1] <- ac_data$account_id[iac]
+          add_eom_data[nadd_eom,2] <- format(dtEOM,"%Y-%m-%d")
+          add_eom_data[nadd_eom,3] <- "OFF"
+          add_eom_data[nadd_eom,4] <- "M"
+          add_eom_data[nadd_eom,5] <- past_ac[2]
+          add_eom_data[nadd_eom,6] <- ac_data$mtd_rtn[iac]
+          add_eom_data[nadd_eom,7] <- past_ac[3] * (1 + as.numeric(ac_data$mtd_rtn[iac])/100)
+        } else {
+          #if a record exits then update it
+          #!!! using bu table
+          upd_text <- paste0("UPDATE caim_account_performance_bu
+              SET bench_return = ", ac_data$mtd_rtn[iac],
+                               ",bench_index = ", past_ac[3] * (1 + as.numeric(ac_data$mtd_rtn[iac])/100),
+                               " WHERE account_id = '", ac_data$account_id[iac],"'
+              AND obs_date = '",params$dt_eff, "'
+              AND source = 'OFF'
+              AND period = 'M'")
+          caim::mdb_execute(conn, upd_text)
+        }
+      }
+    }
+    
+    if (nadd_eom > 0) {
+      #!!! using bu table
+      caim::mdb_insert(conn, "caim_account_performance_bu", add_eom_data)
+    }
   }
 }
 ```
