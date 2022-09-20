@@ -1,6 +1,6 @@
 ---
 params:
-  dt_eff: !r Sys.Date()-1
+  dt_eff: !r Sys.Date()-16
 ---
 
 ```{r setup, include=FALSE}
@@ -10,6 +10,25 @@ library(caim)
 ```
 
 ```{r FuncStuff, include=FALSE}
+EndOfMonth <- function(dt_eff) {
+  
+  dtEOM <- ceiling_date(dt_eff, 'month') %m-% days(1)
+  
+  if (wday(dtEOM) == 1) {
+    dtEOM <- dtEOM - 2
+  } else if (wday(dtEOM) == 7) {
+    dtEOM <- dtEOM - 1
+  }
+  
+  if (dt_eff >= dtEOM) {
+    EOM <- TRUE
+  } else {
+    EOM <- FALSE
+  }
+  
+  return(EOM)  
+}
+
 GetiIdx <- function(index, IndexList, nIdx) {
   found <- FALSE
   iIdx <- 1
@@ -42,7 +61,7 @@ GetPastAc <- function(account_id, dt_eff, past_data, nPast) {
   bench_index <- 100
   no_rec <- TRUE
   
-  while (iPast < nPast && found) {
+  while (iPast <= nPast && found) {
     if (account_id == past_data$account_id[iPast] && dt_eff > past_data$obs_date[iPast]) {
       account_index <- past_data$account_index[iPast]
       bench_index <- past_data$bench_index[iPast]
@@ -267,42 +286,47 @@ if (nac > 0) {
 ```
 
 ```{r WriteDB, include=FALSE}
+nac <- length(ac_data$account_id)
 if (nac > 0) {
   nadd <- 0
   add_data <- data.frame(matrix(nrow=0,ncol=7))
   names(add_data)<-c("account_id","obs_date","source","period","account_index","bench_return","bench_index")
   
   for (iac in 1:nac) {
-    #check if pre-existing perf record
-    past_ac <- GetPastAc(ac_data$account_id[iac], params$dt_eff, past_data, nPast)
-    
-    if (past_ac[1] || TRUE) {
-      #if no record exists then need to create one
-      nadd <- nadd + 1
-      add_data[nadd,1] <- ac_data$account_id[iac]
-      add_data[nadd,2] <- format(params$dt_eff,"%Y-%m-%d")
-      add_data[nadd,3] <- "OFF"
-      add_data[nadd,4] <- "D"
-      add_data[nadd,5] <- past_ac[2]
-      add_data[nadd,6] <- ac_data$day_rtn[iac]
-      add_data[nadd,7] <- past_ac[3] * (1 + as.numeric(ac_data$day_rtn[iac])/100)
-    } else {
-      #if a record exits then update it
-      #!!! using bu table
-      upd_text <- paste0("UPDATE caim_account_performance_bu
-          SET bench_return = ", ac_data$day_rtn[iac],
-                           ",bench_index = ", past_ac[3] * (1 + as.numeric(ac_data$day_rtn[iac])/100),
-                           " WHERE account_id = '", ac_data$account_id[iac],"'
-          AND obs_date = '",params$dt_eff, "',
-          AND source = 'OFF'
-          AND period = 'D'")
-      #mdb_execute(conn, upd_text)
+    if (!is.na(ac_data$day_rtn[iac])) {
+      
+      #check if pre-existing perf record
+      past_ac <- GetPastAc(ac_data$account_id[iac], params$dt_eff, past_data, nPast)
+      
+      if (past_ac[1] || TRUE) {
+        #if no record exists then need to create one
+        nadd <- nadd + 1
+        add_data[nadd,1] <- ac_data$account_id[iac]
+        add_data[nadd,2] <- format(params$dt_eff,"%Y-%m-%d")
+        add_data[nadd,3] <- "OFF"
+        add_data[nadd,4] <- "D"
+        add_data[nadd,5] <- past_ac[2]
+        add_data[nadd,6] <- ac_data$day_rtn[iac]
+        add_data[nadd,7] <- past_ac[3] * (1 + as.numeric(ac_data$day_rtn[iac])/100)
+      } else {
+        #if a record exits then update it
+        #!!! using bu table
+        upd_text <- paste0("UPDATE caim_account_performance_bu
+            SET bench_return = ", ac_data$day_rtn[iac],
+                             ",bench_index = ", past_ac[3] * (1 + as.numeric(ac_data$day_rtn[iac])/100),
+                             " WHERE account_id = '", ac_data$account_id[iac],"'
+            AND obs_date = '",params$dt_eff, "'
+            AND source = 'OFF'
+            AND period = 'D'")
+        #print(upd_text)
+        caim::mdb_execute(conn, upd_text)
+      }
     }
   }
   
   if (nadd > 0) {
     #!!! using bu table
-    #caim::mdb_insert(conn, "caim_account_performance_bu", add_data)
+    caim::mdb_insert(conn, "caim_account_performance_bu", add_data)
   }
 }
 ```
