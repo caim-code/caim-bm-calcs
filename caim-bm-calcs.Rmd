@@ -96,6 +96,10 @@ CONTACT_PATH <- prefs$contact_path
 OUTLOOK_PATH_ROOT <- prefs$outlook_path_root
 OUTLOOK_EMPTY_FILE <- prefs$outlook_empty_file
 
+if (wday(params$dt_eff) == 1) {
+    params$dt_eff <- params$dt_eff - 2
+}
+
 dt_1mago <- as.Date(format(params$dt_eff,"%Y-%m-01"))-7
 ```
 
@@ -333,7 +337,6 @@ if (nac > 0) {
             AND obs_date = '",params$dt_eff, "'
             AND source = 'OFF'
             AND period = 'D'")
-        #print(upd_text)
         caim::mdb_execute(conn, upd_text)
       }
     }
@@ -361,7 +364,8 @@ if (EndOfMonth(params$dt_eff)) {
         #check if pre-existing perf record
         past_ac <- GetPastAc(ac_data$account_id[iac], dtEOM, past_eom_data, nPastEOM)
         
-        if (past_ac[1]) {
+        #!!!
+        if (past_ac[1] || TRUE) {
           #if no record exists then need to create one
           nadd_eom <- nadd_eom + 1
           add_eom_data[nadd_eom,1] <- ac_data$account_id[iac]
@@ -381,6 +385,7 @@ if (EndOfMonth(params$dt_eff)) {
               AND obs_date = '",params$dt_eff, "'
               AND source = 'OFF'
               AND period = 'M'")
+          # print(upd_text)
           caim::mdb_execute(conn, upd_text)
         }
       }
