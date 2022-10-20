@@ -329,8 +329,8 @@ if (nac > 0) {
         add_data[nadd,7] <- past_ac[3] * (1 + as.numeric(ac_data$day_rtn[iac])/100)
       } else {
         #if a record exits then update it
-        #!!! using bu table
-        upd_text <- paste0("UPDATE caim_account_performance_bu
+        #!!! using REAL table
+        upd_text <- paste0("UPDATE caim_account_performance
             SET bench_return = ", ac_data$day_rtn[iac],
                              ",bench_index = ", past_ac[3] * (1 + as.numeric(ac_data$day_rtn[iac])/100),
                              " WHERE account_id = '", ac_data$account_id[iac],"'
@@ -343,8 +343,8 @@ if (nac > 0) {
   }
   
   if (nadd > 0) {
-    #!!! using bu table
-    caim::mdb_insert(conn, "caim_account_performance_bu", add_data)
+    #!!! using REAL table
+    caim::mdb_insert(conn, "caim_account_performance", add_data)
   }
 }
 ```
@@ -377,8 +377,8 @@ if (EndOfMonth(params$dt_eff)) {
           add_eom_data[nadd_eom,7] <- past_ac[3] * (1 + as.numeric(ac_data$mtd_rtn[iac])/100)
         } else {
           #if a record exits then update it
-          #!!! using bu table
-          upd_text <- paste0("UPDATE caim_account_performance_bu
+          #!!! using REAL table
+          upd_text <- paste0("UPDATE caim_account_performance
               SET bench_return = ", ac_data$mtd_rtn[iac],
                                ",bench_index = ", past_ac[3] * (1 + as.numeric(ac_data$mtd_rtn[iac])/100),
                                " WHERE account_id = '", ac_data$account_id[iac],"'
