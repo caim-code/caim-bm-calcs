@@ -365,7 +365,7 @@ if (EndOfMonth(params$dt_eff)) {
         past_ac <- GetPastAc(ac_data$account_id[iac], dtEOM, past_eom_data, nPastEOM)
         
         #!!!
-        if (past_ac[1] || TRUE) {
+        if (past_ac[1]) {
           #if no record exists then need to create one
           nadd_eom <- nadd_eom + 1
           add_eom_data[nadd_eom,1] <- ac_data$account_id[iac]
@@ -392,8 +392,8 @@ if (EndOfMonth(params$dt_eff)) {
     }
     
     if (nadd_eom > 0) {
-      #!!! using bu table
-      caim::mdb_insert(conn, "caim_account_performance_bu", add_eom_data)
+      #!!! using REAL table
+      caim::mdb_insert(conn, "caim_account_performance", add_eom_data)
     }
   }
 }
