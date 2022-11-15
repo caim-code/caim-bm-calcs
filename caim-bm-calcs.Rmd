@@ -212,14 +212,14 @@ if (nacidx > 0) {
   mtd_rtn <- 0
   mtd_rtn_yest <- 0
   old_ac <- acidx_data$account_id[1]
-  ac_data <- data.frame(matrix(nrow=0,ncol=4))
-  names(ac_data)<-c("account_id","mtd_rtn","mtd_rtn_yest","day_rtn")
+  ac_data <- data.frame(matrix(nrow=0,ncol=5))
+  names(ac_data)<-c("account_id","mtd_rtn","mtd_rtn_yest","day_rtn","calc_eom")
   
   for (iacidx in 1:nacidx) {
     iidx <- GetiIdx(acidx_data$index_code[iacidx], index_data, nidx)
     if (acidx_data$account_id[iacidx] != old_ac) {
       day_rtn = 100 * ((1 + mtd_rtn/100)/(1 + mtd_rtn_yest/100) - 1)
-      ac_data[nac,] <- c(acidx_data$account_id[iacidx-1], mtd_rtn, mtd_rtn_yest, day_rtn)
+      ac_data[nac,] <- c(acidx_data$account_id[iacidx-1], mtd_rtn, mtd_rtn_yest, day_rtn, acidx_data$calc_eom[iacidx-1])
       nac <- nac + 1
       old_ac <- acidx_data$account_id[iacidx]
       if (iidx < 0) {
@@ -271,7 +271,7 @@ if (nacidx > 0) {
     }
   }
   day_rtn = 100 * ((1 + mtd_rtn/100)/(1 + mtd_rtn_yest/100) - 1)
-  ac_data[nac,] <- c(acidx_data$account_id[nacidx], mtd_rtn, mtd_rtn_yest, day_rtn)
+  ac_data[nac,] <- c(acidx_data$account_id[nacidx], mtd_rtn, mtd_rtn_yest, day_rtn, acidx_data$calc_eom[nacidx])
 }
 ```
 
@@ -359,7 +359,12 @@ if (EndOfMonth(params$dt_eff)) {
     names(add_eom_data)<-c("account_id","obs_date","source","period","account_index","bench_return","bench_index")
 
     for (iac in 1:nac) {
-      if (!is.na(ac_data$mtd_rtn[iac])) {
+      
+      if (is.na(ac_data$calc_eom[iac])) {
+        ac_data$calc_eom[iac] <- "Y"
+      }
+      
+      if (!is.na(ac_data$mtd_rtn[iac]) && toupper(ac_data$calc_eom[iac]) != "N") {
         
         #check if pre-existing perf record
         past_ac <- GetPastAc(ac_data$account_id[iac], dtEOM, past_eom_data, nPastEOM)
