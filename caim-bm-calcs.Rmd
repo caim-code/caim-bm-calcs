@@ -343,8 +343,11 @@ if (nac > 0) {
   }
   
   if (nadd > 0) {
+    # This bit disabled as could generate unwanted records
+    # for bank holidays.
+    #
     #!!! using REAL table
-    caim::mdb_insert(conn, "caim_account_performance", add_data)
+    # caim::mdb_insert(conn, "caim_account_performance", add_data)
   }
 }
 ```
@@ -380,6 +383,7 @@ if (EndOfMonth(params$dt_eff)) {
           add_eom_data[nadd_eom,5] <- past_ac[2]
           add_eom_data[nadd_eom,6] <- ac_data$mtd_rtn[iac]
           add_eom_data[nadd_eom,7] <- past_ac[3] * (1 + as.numeric(ac_data$mtd_rtn[iac])/100)
+          
         } else {
           #if a record exits then update it
           #!!! using REAL table
